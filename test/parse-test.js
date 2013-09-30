@@ -50,7 +50,17 @@ var expectations = {
   '{{#a}}{{/a}}hi{{#b}}{{/b}}\n'            : [ [ '#', 'a', 0, 6, [], 6 ], [ 'text', 'hi', 12, 14 ], [ '#', 'b', 14, 20, [], 20 ], [ 'text', '\n', 26, 27 ] ],
   '{{a}}\n{{b}}\n\n{{#c}}\n{{/c}}\n'        : [ [ 'name', 'a', 0, 5 ], [ 'text', '\n', 5, 6 ], [ 'name', 'b', 6, 11 ], [ 'text', '\n\n', 11, 13 ], [ '#', 'c', 13, 19, [], 20 ] ],
   '{{#foo}}\n  {{#a}}\n    {{b}}\n  {{/a}}\n{{/foo}}\n'
-                                            : [ [ '#', 'foo', 0, 8, [ [ '#', 'a', 11, 17, [ [ 'text', '    ', 18, 22 ], [ 'name', 'b', 22, 27 ], [ 'text', '\n', 27, 28 ] ], 30 ] ], 37 ] ]
+                                            : [ [ '#', 'foo', 0, 8, [ [ '#', 'a', 11, 17, [ [ 'text', '    ', 18, 22 ], [ 'name', 'b', 22, 27 ], [ 'text', '\n', 27, 28 ] ], 30 ] ], 37 ] ],
+  // CTEMPLATE: tests
+  '{{}}'                                    : [['name', '', 0, 4]],
+  '{{.}}'                                   : [['name', '.', 0, 5]],
+  '{{#something}}{{/something}}{{^something}}{{/something}}'
+                                            : [["#", "something", 0, 14, [], 14], ["^", "something", 28, 42, [], 42]],
+  '{{#something}}{{/something}}{{#something_else}}{{/something_else}}'
+                                            : [["#", "something", 0, 14, [], 14],["^", "something_else", 28, 47, [], 47]],
+  '{{:x-fw=locale=TOKEN}}'                  : [['name', ':x-fw=locale=TOKEN', 0, 22]],
+  '{{token}}{{token:none}}'                 : [["name", "token", 0, 9], ["&", "token", 9, 23]],
+  '{{%MANUALESCAPE}}{{token}}{{token:h}}'   : [["&", "token", 17, 26], ["name", "token", 26, 37]],
 };
 
 describe('Mustache.parse', function () {

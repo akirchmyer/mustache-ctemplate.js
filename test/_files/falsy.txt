@@ -5,8 +5,6 @@ inverted empty array
 
 inverted zero
 
-inverted null
-
 inverted undefined
 
 inverted NaN
