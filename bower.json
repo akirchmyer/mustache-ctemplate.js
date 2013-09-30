@@ -1,0 +1,11 @@
+{
+  "name": "mustache-ctemplate",
+  "version": "0.0.1",
+  "ignore": [
+    "test",
+    "*.txt",
+    "bower.json"
+  ],
+  "dependencies": {
+  }
+}

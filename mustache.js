@@ -133,11 +133,17 @@
     var value = this._cache[name];
 
     if (!value) {
-      if (name == '.') {
-        value = this.view;
-      } else {
+//## reconciliation with ctemplate: flat arrays can be rendered with empty string
+//##  but ctemplate renders the first value of an object
+      if (name == '.' || name === '' && typeof (this.view) !== 'object' && typeof (this.view) !== 'boolean') {
+	value = this.view;
+      }
+//## reconciliation with ctemplate: i18n
+      else if (name.substr(0, 13) === ':x-fw=locale='){
+        value = this.view.__i18n[name.substr(13, name.length)];
+      }
+      else {
         var context = this;
-
         while (context) {
           if (name.indexOf('.') > 0) {
             value = context.view;
@@ -239,7 +245,10 @@
         if (typeof value === 'object') {
           if (isArray(value)) {
             for (var j = 0, jlen = value.length; j < jlen; ++j) {
-              buffer += renderTokens(token[4], writer, context.push(value[j]), template);
+//## reconciliation with ctemplate: flat arrays ignore falsey values
+		if (value[j]) {
+		      buffer += renderTokens(token[4], writer, context.push(value[j]), template);
+		}
             }
           } else if (value) {
             buffer += renderTokens(token[4], writer, context.push(value), template);
@@ -256,11 +265,18 @@
 
         break;
       case '^':
-        value = context.lookup(tokenValue);
+//## Reconciliation with ctemplate: if token ends with _else, its value should be the same as the non-"else"-postfixed token
+	if (tokenValue.substr(tokenValue.length-5, tokenValue.length-1) === '_else') {
+		value = context.lookup(tokenValue.substr(0, tokenValue.length-5));
+	}
+	else {
+		value = context.lookup(tokenValue);
+	}
 
         // Use JavaScript's definition of falsy. Include empty arrays.
         // See https://github.com/janl/mustache.js/issues/186
-        if (!value || (isArray(value) && value.length === 0)) {
+//## Reconciliation with ctemplate: a null value for a token should be completely ignored, including its else block
+        if (value !== null && (!value || (isArray(value) && value.length === 0))) {
           buffer += renderTokens(token[4], writer, context, template);
         }
 
@@ -436,6 +452,28 @@
 
       // Match the closing tag.
       if (!scanner.scan(tagRes[1])) throw new Error('Unclosed tag at ' + scanner.pos);
+
+//## reconciliation with ctemplate: %MANUALESCAPE
+if (value === '%MANUALESCAPE') {
+	this.manualEscape = true;
+}
+var hasEscapeFlag = value.substr(value.length - 2, value.length - 1) === ':h';
+if (this.manualEscape && !hasEscapeFlag) {
+	type = '&';
+}
+else if (hasEscapeFlag) {
+	value = value.substr(0, value.length - 2);
+}
+
+//## reconciliation with ctemplate: else tokens are prefixed with # and end with _else
+if (type === '#' && value.substr(value.length-5, value.length-1) === '_else') {
+type = '^';
+}
+//## reconciliation with ctemplate: :none at the end of a value should not escape html
+if (type === 'name' && value.substr(value.length - 5, value.length-1) === ':none') {
+	type = "&";
+	value = value.substr(0, value.length - 5);
+}
 
       token = [type, value, start, scanner.pos];
       tokens.push(token);
